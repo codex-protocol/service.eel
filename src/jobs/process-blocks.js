@@ -109,7 +109,7 @@ export default {
             const filteredReturnValues = event.returnValues
 
             Object.keys(filteredReturnValues).forEach((key) => {
-              if (Number.isNaN(+key)) {
+              if (!Number.isNaN(+key)) {
                 delete filteredReturnValues[key]
               }
             })
