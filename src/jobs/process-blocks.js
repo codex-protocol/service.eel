@@ -10,7 +10,7 @@ import ethereumService from '../services/ethereum'
 
 export default {
 
-  name: 'process-blocks',
+  name: 'eel.process-blocks',
   frequency: `${config.blockchain.averageBlockTime} seconds`,
 
   setup() {
