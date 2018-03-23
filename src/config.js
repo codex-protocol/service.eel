@@ -12,7 +12,6 @@ const config = {
   development: {
     mongodbUri: (process.env.MONGO_USER && process.env.MONGO_PW) ? `mongodb://${process.env.MONGO_USER}:${encodeURIComponent(process.env.MONGO_PW)}@localhost:27017/eel` : 'mongodb://localhost:27017/eel',
     process: {
-      port: 3000,
       logLevel: 'verbose',
     },
     blockchain: {
