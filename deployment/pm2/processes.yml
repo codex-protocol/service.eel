@@ -1,0 +1,6 @@
+apps:
+  -
+    script: /opt/process/dist/index.js
+    exec_mode: cluster
+    instances: max
+    name: eel
