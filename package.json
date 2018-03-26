@@ -21,7 +21,7 @@
     "build": "npm run lint && npm run compile",
     "start": "npm run lint && babel-node src/index.js",
     "start:compiled": "npm run compile && node dist/index.js",
-    "dropdb": "mongo eel --eval 'db.dropDatabase()'",
+    "drop-db": "mongo eel --eval 'db.dropDatabase()'",
     "compile": "npm run clean && babel src --out-dir dist && cp -r src/contracts/*.json dist/contracts"
   },
   "dependencies": {
