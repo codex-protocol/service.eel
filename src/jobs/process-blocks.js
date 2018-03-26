@@ -4,8 +4,8 @@ import Bluebird from 'bluebird'
 
 import config from '../config'
 import models from '../models'
-import contracts from '../contracts'
 import logger from '../services/logger'
+import contracts from '../services/contracts'
 import ethereumService from '../services/ethereum'
 
 export default {

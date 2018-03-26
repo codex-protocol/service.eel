@@ -2,14 +2,14 @@ import Bluebird from 'bluebird'
 import filewalker from 'filewalker'
 
 import config from '../config'
-import contracts from '../contracts'
+import contracts from '../services/contracts'
 import ethereumService from '../services/ethereum'
 
 export default () => {
 
   return new Bluebird((resolve, reject) => {
 
-    const filewalkerHandler = filewalker(`${__dirname}/../contracts`, { recursive: true, matchRegExp: /\.json$/i })
+    const filewalkerHandler = filewalker(`${__dirname}/../../static/contracts`, { recursive: true, matchRegExp: /\.json$/i })
 
     filewalkerHandler.on('error', reject)
     filewalkerHandler.on('done', () => { resolve(contracts) })
@@ -24,7 +24,7 @@ export default () => {
       }
 
       /* eslint import/no-dynamic-require: 0 global-require: 0 */
-      const contractJSON = require(`${__dirname}/../contracts/${contractFilePath}`)
+      const contractJSON = require(`${__dirname}/../../static/contracts/${contractFilePath}`)
 
       const contractAddress = contractJSON.networks[config.blockchain.networkId].address
       const contract = new ethereumService.Contract(contractJSON.abi, contractAddress)

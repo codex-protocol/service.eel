@@ -22,7 +22,7 @@
     "start": "npm run lint && babel-node src/index.js",
     "start:compiled": "npm run compile && node dist/index.js",
     "drop-db": "mongo eel --eval 'db.dropDatabase()'",
-    "compile": "npm run clean && babel src --out-dir dist && cp -r src/contracts/*.json dist/contracts"
+    "compile": "npm run clean && babel src --out-dir dist"
   },
   "dependencies": {
     "agenda": "^1.0.3",
