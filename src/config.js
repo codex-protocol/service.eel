@@ -20,7 +20,6 @@ const config = {
       startingBlockHeight: 0,
       networkId: '5777', // Ganache
 
-      privateKey: process.env.PRIVATE_KEY,
       providerRpcUrl: process.env.RPC_URL,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
     },
