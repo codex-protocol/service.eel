@@ -31,7 +31,7 @@ export default () => {
 
       contract.name = contractJSON.contractName
 
-      contracts.push(contract)
+      contracts[contract.name] = contract
 
     })
 

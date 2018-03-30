@@ -14,7 +14,13 @@ export default {
   frequency: `${config.blockchain.averageBlockTime} seconds`,
 
   setup() {
-
+    // this is just so we don't have to call Object.values(contracts) in each
+    //  job loop
+    //
+    // since the contracts in services/contracts.js are populated at run time
+    //  (via initializers/contracts.js) and never changed, we can be confident
+    //  that caching the object values is ok
+    this.contracts = Object.values(contracts)
   },
 
   getJob() {
@@ -94,7 +100,7 @@ export default {
 
     logger.verbose(`[${this.name}]`, 'processing block number', block.number)
 
-    return Bluebird.map(contracts, (contract) => {
+    return Bluebird.map(this.contracts, (contract) => {
 
       return contract.getPastEvents('allEvents', { fromBlock: block.number, toBlock: block.number })
         .then((events) => {
