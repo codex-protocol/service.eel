@@ -12,22 +12,30 @@ const config = {
   development: {
     mongodbUri: (process.env.MONGO_USER && process.env.MONGO_PW) ? `mongodb://${process.env.MONGO_USER}:${encodeURIComponent(process.env.MONGO_PW)}@localhost:27017/eel` : 'mongodb://localhost:27017/eel',
     process: {
-      logLevel: 'verbose',
+      logLevel: 'silly',
     },
     blockchain: {
-
-      minConfirmations: 3,
+      minConfirmations: 0,
       startingBlockHeight: 0,
       networkId: '5777', // Ganache
-
       providerRpcUrl: process.env.RPC_URL,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
     },
   },
 
-  // TODO: populate when a staging environment is set up
-  // TODO: logLevel: 'verbose',
-  staging: {},
+  staging: {
+    mongodbUri: `mongodb://${process.env.MONGO_USER}:${encodeURIComponent(process.env.MONGO_PW)}@ds235239.mlab.com:35239/staging-eel`,
+    process: {
+      logLevel: 'verbose',
+    },
+    blockchain: {
+      minConfirmations: 5,
+      startingBlockHeight: 2053830,
+      networkId: '4', // Rinkeby
+      providerRpcUrl: process.env.RPC_URL,
+      averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
+    },
+  },
 
   // TODO: populate when a production environment is set up
   // TODO: logLevel: 'info',
