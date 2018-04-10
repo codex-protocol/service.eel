@@ -10,7 +10,7 @@ if (result.error) {
 
 const config = {
   development: {
-    mongodbUri: (process.env.MONGO_USER && process.env.MONGO_PW) ? `mongodb://${process.env.MONGO_USER}:${encodeURIComponent(process.env.MONGO_PW)}@localhost:27017/eel` : 'mongodb://localhost:27017/eel',
+    mongodbUri: encodeURI(process.env.MONGODB_URI), // NOTE: encodeURI is necessary for passwords with URI reserved characters
     process: {
       logLevel: 'silly',
     },
@@ -24,7 +24,7 @@ const config = {
   },
 
   staging: {
-    mongodbUri: `mongodb://${process.env.MONGO_USER}:${encodeURIComponent(process.env.MONGO_PW)}@ds235239.mlab.com:35239/staging-eel`,
+    mongodbUri: encodeURI(process.env.MONGODB_URI), // NOTE: encodeURI is necessary for passwords with URI reserved characters
     process: {
       logLevel: 'verbose',
     },
