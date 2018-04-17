@@ -1,12 +1,9 @@
-/* eslint-disable class-methods-use-this */
-
 import Bluebird from 'bluebird'
+import { ethClient, contracts } from '@codex-protocol/ethereum-service'
 
 import config from '../config'
 import models from '../models'
 import logger from '../services/logger'
-import contracts from '../services/contracts'
-import ethereumService from '../services/ethereum'
 
 export default {
 
@@ -17,9 +14,9 @@ export default {
     // this is just so we don't have to call Object.values(contracts) in each
     //  job loop
     //
-    // since the contracts in services/contracts.js are populated at run time
-    //  (via initializers/contracts.js) and never changed, we can be confident
-    //  that caching the object values is ok
+    // since the contracts in @codex-protocol/ethereum-service are populated at
+    //  run time and never changed, we can be confident that caching the object
+    //  values is ok
     this.contracts = Object.values(contracts)
   },
 
@@ -48,7 +45,7 @@ export default {
     return this.getJob()
       .then((job) => {
 
-        return ethereumService.getBlockNumber()
+        return ethClient.getBlockNumber()
           .then((currentBlockNumber) => {
 
             const currentBlockNumberWithMinConfirmations = currentBlockNumber - config.blockchain.minConfirmations
@@ -81,7 +78,7 @@ export default {
     let nextBlockNumberToProcess = fromBlockNumber
 
     for (; nextBlockNumberToProcess <= toBlockNumber; nextBlockNumberToProcess++) {
-      getBlockPromises.push(ethereumService.getBlock(nextBlockNumberToProcess))
+      getBlockPromises.push(ethClient.getBlock(nextBlockNumberToProcess))
     }
 
     return Bluebird.all(getBlockPromises)

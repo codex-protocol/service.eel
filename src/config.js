@@ -17,8 +17,6 @@ const config = {
     blockchain: {
       minConfirmations: 0,
       startingBlockHeight: 0,
-      networkId: '5777', // Ganache
-      providerRpcUrl: process.env.RPC_URL,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
     },
   },
@@ -31,8 +29,6 @@ const config = {
     blockchain: {
       minConfirmations: 5,
       startingBlockHeight: 2053830,
-      networkId: '4', // Rinkeby
-      providerRpcUrl: process.env.RPC_URL,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
     },
   },
