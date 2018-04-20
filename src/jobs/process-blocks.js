@@ -1,5 +1,5 @@
 import Bluebird from 'bluebird'
-import { ethClient, contracts } from '@codex-protocol/ethereum-service'
+import { eth, contracts } from '@codex-protocol/ethereum-service'
 
 import config from '../config'
 import models from '../models'
@@ -45,7 +45,7 @@ export default {
     return this.getJob()
       .then((job) => {
 
-        return ethClient.getBlockNumber()
+        return eth.getBlockNumber()
           .then((currentBlockNumber) => {
 
             const currentBlockNumberWithMinConfirmations = currentBlockNumber - config.blockchain.minConfirmations
@@ -78,7 +78,7 @@ export default {
     let nextBlockNumberToProcess = fromBlockNumber
 
     for (; nextBlockNumberToProcess <= toBlockNumber; nextBlockNumberToProcess++) {
-      getBlockPromises.push(ethClient.getBlock(nextBlockNumberToProcess))
+      getBlockPromises.push(eth.getBlock(nextBlockNumberToProcess))
     }
 
     return Bluebird.all(getBlockPromises)
