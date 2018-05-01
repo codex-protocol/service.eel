@@ -8,7 +8,7 @@ if (result.error) {
   throw result.error
 }
 
-const config = {
+const fullConfig = {
   development: {
     mongodbUri: encodeURI(process.env.MONGODB_URI), // NOTE: encodeURI is necessary for passwords with URI reserved characters
     process: {
@@ -40,4 +40,8 @@ const config = {
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
 
-export default config[process.env.NODE_ENV]
+const envConfig = fullConfig[process.env.NODE_ENV]
+
+envConfig.useSentry = !!process.env.SENTRY_DSN
+
+export default envConfig
