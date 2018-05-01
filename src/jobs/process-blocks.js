@@ -104,7 +104,7 @@ export default {
 
           return Bluebird.map(events, (event) => {
 
-            logger.info(`[${this.name}]`, `found event on block number ${block.number}:`, `[${contract.name}]`, event.event)
+            logger.verbose(`[${this.name}]`, `found event on block number ${block.number}:`, `[${contract.name}]`, event.event)
             logger.debug(`[${this.name}]`, 'event data:', `[${contract.name}]`, event)
 
             // remove all the "numbered" keys in event.returnValues
