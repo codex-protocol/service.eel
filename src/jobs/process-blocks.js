@@ -58,7 +58,7 @@ export default {
               return job
             }
 
-            return this.processBlocks(job, job.data.nextBlockNumberToProcess, currentBlockNumberWithMinConfirmations)
+            return this.processBlocks(job.data.nextBlockNumberToProcess, currentBlockNumberWithMinConfirmations)
               .then((nextBlockNumberToProcess) => {
                 job.data.nextBlockNumberToProcess = nextBlockNumberToProcess
                 job.markModified('data')
@@ -71,24 +71,47 @@ export default {
 
   },
 
-  processBlocks(job, fromBlockNumber, toBlockNumber) {
+  processBlocks(fromBlockNumber, toBlockNumber) {
 
-    const getBlockPromises = []
+    let currentBlockNumberToProcess = fromBlockNumber
 
-    let nextBlockNumberToProcess = fromBlockNumber
+    // create an (inclusive) array of numbers in the form:
+    //  [fromBlockNumber, ..., toBlockNumber]
+    const blockNumbers = new Array((toBlockNumber - fromBlockNumber) + 1)
+      .fill(0)
+      .map((element, index) => {
+        return fromBlockNumber + index
+      })
 
-    for (; nextBlockNumberToProcess <= toBlockNumber; nextBlockNumberToProcess++) {
-      getBlockPromises.push(eth.getBlock(nextBlockNumberToProcess))
-    }
+    return Bluebird
+      .mapSeries(blockNumbers, (blockNumber) => {
+        return eth.getBlock(blockNumber, true)
+          .then((block) => {
 
-    return Bluebird.all(getBlockPromises)
-      .then((blocks) => {
-        return Bluebird.map(blocks, (block) => {
-          return this.processBlock(block)
-        })
+            // NOTE: mapSeries will short circuit when a promise rejects, so the
+            //  following loop will stop processing this chunk of blocks if
+            //  eth.getBlock() returns null for a given block number, thus
+            //  leaving currentBlockNumberToProcess set to the last processed
+            //  block number
+            currentBlockNumberToProcess = blockNumber
+
+            if (!block) {
+              throw new Error(`eth.getBlock() returned ${block} for block number ${blockNumber} when processing block number(s) ${fromBlockNumber} through ${toBlockNumber}`)
+            }
+
+            return this.processBlock(block)
+
+          })
       })
       .then(() => {
-        return nextBlockNumberToProcess
+        // NOTE: add 1 here since if all blocks were processed succefully, then
+        //  currentBlockNumberToProcess === toBlockNumber and we want to start
+        //  at the next block when this method is called again
+        return currentBlockNumberToProcess + 1
+      })
+      .catch((error) => {
+        logger.warn(`[${this.name}]`, error.message)
+        return currentBlockNumberToProcess
       })
 
   },
