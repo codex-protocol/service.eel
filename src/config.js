@@ -27,8 +27,7 @@ const fullConfig = {
       logLevel: 'verbose',
     },
     blockchain: {
-      // minConfirmations: 5,
-      minConfirmations: 1, // NOTE: temporarily changing minConfirmations to 1 for Ethereal demos, change back afterwards
+      minConfirmations: 5,
       startingBlockHeight: 2053830,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
     },
