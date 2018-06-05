@@ -1,14 +1,15 @@
 import mongoose from 'mongoose'
 
-const { Schema } = mongoose
-
-const BlockchainEventSchema = new Schema({
-  eventName: String,
+const schema = new mongoose.Schema({
+  eventName: {
+    index: true,
+    type: String,
+  },
   blockNumber: Number,
   contractName: String,
   contractAddress: String,
   transactionHash: String,
-  returnValues: Schema.Types.Mixed,
+  returnValues: mongoose.Schema.Types.Mixed,
   createdAt: {
     type: Date,
     default: () => {
@@ -17,6 +18,5 @@ const BlockchainEventSchema = new Schema({
   },
 })
 
-const BlockchainEvent = mongoose.model('BlockchainEvent', BlockchainEventSchema)
 
-export default BlockchainEvent
+export default mongoose.model('BlockchainEvent', schema)

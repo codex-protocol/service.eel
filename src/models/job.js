@@ -1,12 +1,11 @@
 import mongoose from 'mongoose'
 
-const { Schema } = mongoose
-
-const JobSchema = new Schema({
-  name: String,
-  data: Schema.Types.Mixed,
+const schema = new mongoose.Schema({
+  name: {
+    index: true,
+    type: String,
+  },
+  data: mongoose.Schema.Types.Mixed,
 })
 
-const Job = mongoose.model('Job', JobSchema)
-
-export default Job
+export default mongoose.model('Job', schema)
