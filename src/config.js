@@ -33,9 +33,17 @@ const fullConfig = {
     },
   },
 
-  // TODO: populate when a production environment is set up
-  // TODO: logLevel: 'info',
-  production: {},
+  production: {
+    mongodbUri: encodeURI(process.env.MONGODB_URI), // NOTE: encodeURI is necessary for passwords with URI reserved characters
+    process: {
+      logLevel: 'verbose',
+    },
+    blockchain: {
+      minConfirmations: 5,
+      startingBlockHeight: 2449841, // TODO: update this when production is pointing to mainnet (non-beta)
+      averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
+    },
+  },
 }
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development'
