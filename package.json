@@ -1,10 +1,10 @@
 {
   "name": "@codex-protocol/service.eel",
   "version": "0.1.0",
-  "description": "A simple service that listens for events emitted by Codex Protocol smart contracts on the ethereum blockchain.",
+  "description": "A simple service that listens for events emitted by Codex Protocol smart contracts on the Ethereum blockchain.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codex-protocol/eel"
+    "url": "https://github.com/codex-protocol/service.eel"
   },
   "contributors": [
     {
