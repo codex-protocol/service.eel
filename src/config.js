@@ -40,7 +40,7 @@ const fullConfig = {
     },
     blockchain: {
       minConfirmations: 8,
-      startingBlockHeight: 5992644,
+      startingBlockHeight: 5999311,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
     },
   },
