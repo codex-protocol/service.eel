@@ -66,6 +66,9 @@ export default {
               })
 
           })
+          .catch((error) => {
+            logger.info(`[${this.name}]`, 'could not get currentBlockNumber:', error)
+          })
 
       })
 
@@ -102,6 +105,14 @@ export default {
             return this.processBlock(block)
 
           })
+          .catch((error) => {
+            logger.info(`[${this.name}]`, `could not get block number ${blockNumber}:`, error)
+
+            // @NOTE: be sure to throw the error here so the .catch() is picked
+            //  up below instead of the .then() (which would cause a block to be
+            //  skipped an unprocessed)
+            throw error
+          })
       })
       .then(() => {
         // NOTE: add 1 here since if all blocks were processed succefully, then
@@ -109,8 +120,7 @@ export default {
         //  at the next block when this method is called again
         return currentBlockNumberToProcess + 1
       })
-      .catch((error) => {
-        logger.warn(`[${this.name}]`, error.message)
+      .catch(() => {
         return currentBlockNumberToProcess
       })
 
