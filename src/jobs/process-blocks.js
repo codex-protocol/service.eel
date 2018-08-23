@@ -18,6 +18,10 @@ export default {
     //  run time and never changed, we can be confident that caching the object
     //  values is ok
     this.contracts = Object.values(contracts)
+      // also filter out any contracts that haven't been deployed
+      .filter((contract) => {
+        return !!contract.options.address
+      })
   },
 
   getJob() {
