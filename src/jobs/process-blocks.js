@@ -5,6 +5,10 @@ import config from '../config'
 import models from '../models'
 import logger from '../services/logger'
 
+const insertManyOptions = {
+  ordered: false, // insert all documents possible and report errors later
+}
+
 export default {
 
   name: 'process-blocks',
@@ -34,13 +38,24 @@ export default {
 
         logger.verbose(`[${this.name}] no job found, creating a new one`)
 
-        return models.Job.create({
-          name: this.name,
-          data: {
-            nextBlockNumberToProcess: config.blockchain.startingBlockHeight,
-          },
-        })
+        return eth.getBlockNumber()
+          .then((currentBlockNumber) => {
+            return currentBlockNumber - config.blockchain.minConfirmations
+          })
+          .then((currentBlockNumberWithMinConfirmations) => {
 
+            const numBlocks = (currentBlockNumberWithMinConfirmations - config.blockchain.startingBlockHeight)
+            const timeEstimate = Math.round((numBlocks / config.blockchain.chunkSize) * config.blockchain.averageBlockTime)
+            logger.info(`[${this.name}]`, 'rebuilding database from block', config.blockchain.startingBlockHeight, 'to block', currentBlockNumberWithMinConfirmations, `(${numBlocks} blocks)`)
+            logger.info(`[${this.name}]`, 'this will take about', Math.floor(timeEstimate / 60), 'minutes,', timeEstimate % 60, 'seconds')
+
+            return models.Job.create({
+              name: this.name,
+              data: {
+                nextBlockNumberToProcess: config.blockchain.startingBlockHeight,
+              },
+            })
+          })
       })
   },
 
@@ -51,10 +66,39 @@ export default {
 
         return eth.getBlockNumber()
           .then((currentBlockNumber) => {
+            return currentBlockNumber - config.blockchain.minConfirmations
+          })
 
-            const currentBlockNumberWithMinConfirmations = currentBlockNumber - config.blockchain.minConfirmations
+          // this block deletes any existing BlockchainEvent records that have a
+          //  blockNumber >= job.data.nextBlockNumberToProcess, this ensures
+          //  we don't create duplicate BlockchainEvent records when the job is
+          //  rebuilding the database (e.g. "catching up" to the current block
+          //  after job.data.nextBlockNumberToProcess has been manually reset to
+          //  an earlier block, or the job has been removed to rebuild the
+          //  database entirely)
+          .then((currentBlockNumberWithMinConfirmations) => {
 
-            logger.verbose(`[${this.name}]`, 'current block number is', currentBlockNumber)
+            // if we're about to process the current block, there's no need to
+            //  run the remove() since there can't possibly be any events
+            //  already indexed for this block (unless, I suppose,
+            //  minConfirmations changes to a smaller number in the config 🤔)
+            if (job.data.nextBlockNumberToProcess >= currentBlockNumberWithMinConfirmations) {
+              return currentBlockNumberWithMinConfirmations
+            }
+
+            return models.BlockchainEvent
+              .remove({ blockNumber: { $gte: job.data.nextBlockNumberToProcess } })
+              .then(({ result }) => {
+                if (result.n > 0) {
+                  logger.info(`[${this.name}]`, `removed ${result.n} existing BlockchainEvent records with blockNumber >= ${job.data.nextBlockNumberToProcess}`)
+                }
+                return currentBlockNumberWithMinConfirmations
+              })
+
+          })
+
+          .then((currentBlockNumberWithMinConfirmations) => {
+
             logger.verbose(`[${this.name}]`, `current block number with ${config.blockchain.minConfirmations} confirmations is`, currentBlockNumberWithMinConfirmations)
 
             if (job.data.nextBlockNumberToProcess > currentBlockNumberWithMinConfirmations) {
@@ -62,113 +106,104 @@ export default {
               return job
             }
 
-            return this.processBlocks(job.data.nextBlockNumberToProcess, currentBlockNumberWithMinConfirmations)
-              .then((nextBlockNumberToProcess) => {
-                job.data.nextBlockNumberToProcess = nextBlockNumberToProcess
+            // only get "chunkSize" blocks at a time, to prevent the job from
+            //  trying to do too much and crashing the process when rebuilding
+            //  the database from scratch
+            const fromBlock = job.data.nextBlockNumberToProcess
+            const toBlock = ((fromBlock + config.blockchain.chunkSize) - 1 > currentBlockNumberWithMinConfirmations)
+              ? currentBlockNumberWithMinConfirmations
+              : (fromBlock + config.blockchain.chunkSize) - 1
+
+            return this.processBlocks(fromBlock, toBlock)
+              .then(() => {
+                job.data.nextBlockNumberToProcess = toBlock + 1
                 job.markModified('data')
                 return job.save()
               })
 
           })
           .catch((error) => {
-            logger.info(`[${this.name}]`, 'could not get currentBlockNumber:', error)
+            logger.warn(`[${this.name}]`, 'could not process blocks:', error)
           })
 
       })
 
   },
 
-  processBlocks(fromBlockNumber, toBlockNumber) {
+  processBlocks(fromBlock, toBlock) {
 
-    let currentBlockNumberToProcess = fromBlockNumber
+    if (fromBlock === toBlock) {
+      logger.verbose(`[${this.name}]`, 'processing block number', fromBlock)
+    } else {
+      logger.verbose(`[${this.name}]`, 'processing block numbers', fromBlock, '-', toBlock)
+    }
 
-    // create an (inclusive) array of numbers in the form:
-    //  [fromBlockNumber, ..., toBlockNumber]
-    const blockNumbers = new Array((toBlockNumber - fromBlockNumber) + 1)
-      .fill(0)
-      .map((element, index) => {
-        return fromBlockNumber + index
-      })
+    // for all contracts...
+    return Bluebird.mapSeries(this.contracts, (contract) => {
 
-    return Bluebird
-      .mapSeries(blockNumbers, (blockNumber) => {
-        return eth.getBlock(blockNumber, true)
-          .then((block) => {
+      // ...get all events emitted in this chunk
+      return contract
+        .getPastEvents('allEvents', { fromBlock, toBlock })
 
-            // NOTE: mapSeries will short circuit when a promise rejects, so the
-            //  following loop will stop processing this chunk of blocks if
-            //  eth.getBlock() returns null for a given block number, thus
-            //  leaving currentBlockNumberToProcess set to the last processed
-            //  block number
-            currentBlockNumberToProcess = blockNumber
-
-            if (!block) {
-              throw new Error(`eth.getBlock() returned ${block} for block number ${blockNumber} when processing block number(s) ${fromBlockNumber} through ${toBlockNumber}`)
-            }
-
-            return this.processBlock(block)
-
-          })
-          .catch((error) => {
-            logger.info(`[${this.name}]`, `could not get block number ${blockNumber}:`, error)
-
-            // @NOTE: be sure to throw the error here so the .catch() is picked
-            //  up below instead of the .then() (which would cause a block to be
-            //  skipped an unprocessed)
-            throw error
-          })
-      })
-      .then(() => {
-        // NOTE: add 1 here since if all blocks were processed succefully, then
-        //  currentBlockNumberToProcess === toBlockNumber and we want to start
-        //  at the next block when this method is called again
-        return currentBlockNumberToProcess + 1
-      })
-      .catch(() => {
-        return currentBlockNumberToProcess
-      })
-
-  },
-
-  processBlock(block) {
-
-    logger.verbose(`[${this.name}]`, 'processing block number', block.number)
-
-    return Bluebird.map(this.contracts, (contract) => {
-
-      return contract.getPastEvents('allEvents', { fromBlock: block.number, toBlock: block.number })
+        // create & return a newBlockchainEventData object for each event to
+        //  be inserted in bulk later
         .then((events) => {
 
-          return Bluebird.map(events, (event) => {
+          return events
+            .map((event) => {
 
-            logger.verbose(`[${this.name}]`, `found event on block number ${block.number}:`, `[${contract.name}]`, event.event)
-            logger.debug(`[${this.name}]`, 'event data:', `[${contract.name}]`, event)
-
-            // remove all the "numbered" keys in event.returnValues
-            //  since we really just want their named counterparts
-            const filteredReturnValues = event.returnValues
-
-            Object.keys(filteredReturnValues).forEach((key) => {
-              if (!Number.isNaN(+key)) {
-                delete filteredReturnValues[key]
+              // usually this means it was deployed on that block
+              if (!event.event) {
+                return null
               }
+
+              logger.verbose(`[${this.name}]`, `found event on block number ${event.blockNumber}:`, `[${contract.name}]`, event.event)
+              logger.debug(`[${this.name}]`, 'event data:', `[${contract.name}]`, event)
+
+              // remove all the "numbered" keys in event.returnValues
+              //  since we really just want their named counterparts
+              const filteredReturnValues = event.returnValues
+
+              Object.keys(filteredReturnValues).forEach((key) => {
+                if (!Number.isNaN(+key)) {
+                  delete filteredReturnValues[key]
+                }
+              })
+
+              return {
+                eventName: event.event,
+                contractName: contract.name,
+                blockNumber: event.blockNumber,
+                contractAddress: event.address,
+                returnValues: filteredReturnValues,
+                transactionHash: event.transactionHash,
+              }
+
             })
 
-            const newBlockchainEventData = {
-              eventName: event.event,
-              contractName: contract.name,
-              blockNumber: event.blockNumber,
-              contractAddress: event.address,
-              returnValues: filteredReturnValues,
-              transactionHash: event.transactionHash,
-            }
+            // filter out any events that had no eventName
+            .filter((newBlockchainEventData) => {
+              return newBlockchainEventData !== null
+            })
 
-            const blockchainEvent = new models.BlockchainEvent(newBlockchainEventData)
+        })
 
-            return blockchainEvent.save()
+        // flatten & sort the array of arrays returned above, e.g.
+        //  [[Contract1Events], [Contract2Events]] =>
+        //  [Contract1Event1, Contract1Event2, Contract2Event1, Contract2Event2]
+        .then((newBlockchainEventsData) => {
+          return newBlockchainEventsData
+            .reduce((accumulator, currentValue) => {
+              return accumulator.concat(currentValue)
+            }, [])
+            .sort((a, b) => {
+              return a.blockNumber - b.blockNumber
+            })
+        })
 
-          })
-
+        // insert all the records
+        .then((newBlockchainEventsData) => {
+          return models.BlockchainEvent.insertMany(newBlockchainEventsData, insertManyOptions)
         })
 
     })

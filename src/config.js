@@ -15,9 +15,10 @@ const fullConfig = {
       logLevel: 'silly',
     },
     blockchain: {
-      minConfirmations: 0,
       startingBlockHeight: 0,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
+      minConfirmations: 0,
+      chunkSize: 50000, // max number of blocks to request each time the process-blocks job is run
     },
   },
 
@@ -27,9 +28,10 @@ const fullConfig = {
       logLevel: 'verbose',
     },
     blockchain: {
-      minConfirmations: 5,
       startingBlockHeight: 3436527,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
+      minConfirmations: 5,
+      chunkSize: 50000, // max number of blocks to request each time the process-blocks job is run
     },
   },
 
@@ -39,9 +41,10 @@ const fullConfig = {
       logLevel: 'info',
     },
     blockchain: {
-      minConfirmations: 8,
-      startingBlockHeight: 5999924,
+      startingBlockHeight: 6000000,
       averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
+      minConfirmations: 8,
+      chunkSize: 50000, // max number of blocks to request each time the process-blocks job is run
     },
   },
 }
