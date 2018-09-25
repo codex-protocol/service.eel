@@ -10,5 +10,5 @@ Bluebird.resolve()
   .then(connectToMongoDb)
   .then(startJobs)
   .then(() => {
-    logger.verbose('🐍  eel is listening for blockchain events')
+    logger.verbose('🐍  eel is listening for blockchain events  🐍')
   })

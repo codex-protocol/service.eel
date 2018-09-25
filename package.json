@@ -16,14 +16,13 @@
   ],
   "license": "AGPL-3.0-or-later",
   "scripts": {
-    "nsp": "nsp check",
     "clean": "rm -rf dist",
     "lint": "eslint src/.",
     "drop-db": "mongo eel --eval 'db.dropDatabase()'",
     "start": "npm run lint && babel-node src/index.js",
     "compile": "npm run clean && babel src --out-dir dist",
     "link-all": "npm link @codex-protocol/ethereum-service",
-    "build": "npm run lint && npm run nsp && npm run compile",
+    "build": "npm run lint && npm audit && npm run compile",
     "start:compiled": "npm run compile && node dist/index.js",
     "install-and-link": "rm -rf node_modules && npm install && npm run link-all"
   },
@@ -50,7 +49,6 @@
     "babel-register": "^6.26.0",
     "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.11.0",
-    "nsp": "^3.2.1"
+    "eslint-plugin-import": "^2.11.0"
   }
 }
