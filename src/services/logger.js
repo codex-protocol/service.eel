@@ -19,6 +19,7 @@ if (config.useSentry) {
       install: true,
       level: 'info',
       config: {
+        environment: `${process.env.NODE_ENV}-${config.networkName}`,
         captureUnhandledRejections: true,
         name: 'eel',
       },
