@@ -5,10 +5,10 @@ source /home/ec2-user/.bash_profile
 
 # set the NODE_ENV environment variable based on the CodeDeploy deployment group
 #  name
-if [[ $DEPLOYMENT_GROUP_NAME == "production" ]] || [[ $DEPLOYMENT_GROUP_NAME == "mainnet" ]]
+if [[ $DEPLOYMENT_GROUP_NAME == "mainnet" ]] || [[ $DEPLOYMENT_GROUP_NAME == "rinkeby" ]]
 then
   NODE_ENV=production
-elif [[ $DEPLOYMENT_GROUP_NAME == "staging" ]]
+elif [[ $DEPLOYMENT_GROUP_NAME == "ropsten" ]]
 then
   NODE_ENV=staging
 else
