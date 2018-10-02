@@ -123,7 +123,7 @@ export default {
 
           })
           .catch((error) => {
-            logger.warn(`[${this.name}]`, 'could not process blocks:', error)
+            logger.info(`[${this.name}]`, 'could not process blocks:', error)
           })
 
       })
