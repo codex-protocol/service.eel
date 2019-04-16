@@ -24,7 +24,7 @@ export default {
     this.contracts = Object.values(contracts)
       // also filter out any contracts that haven't been deployed
       .filter((contract) => {
-        return !!contract.options.address
+        return !!contract.address
       })
   },
 
@@ -160,14 +160,34 @@ export default {
               logger.verbose(`[${this.name}]`, `found event on block number ${event.blockNumber}:`, `[${contract.name}]`, event.event)
               logger.debug(`[${this.name}]`, 'event data:', `[${contract.name}]`, event)
 
-              // remove all the "numbered" keys in event.returnValues
-              //  since we really just want their named counterparts
+              // remove all the "numbered" keys in event.returnValues since we
+              //  really just want their named counterparts
               const filteredReturnValues = event.returnValues
 
-              Object.keys(filteredReturnValues).forEach((key) => {
+              Object.entries(filteredReturnValues).forEach(([key, value]) => {
+
                 if (!Number.isNaN(+key)) {
                   delete filteredReturnValues[key]
+                  return
                 }
+
+                // @NOTE: web3.js 1.0.0-beta.51 introduced a REALLY ANNOYING
+                //  breaking change that causes all numbers to be returned as
+                //  BN.js instances instead of strings... so we have to "undo"
+                //  that here...
+                //
+                // unfortunately the clusterfuck that is BigNumber / BN in web3
+                //  makes this super hard right now, all the docs are wrong and
+                //  reference non-existent features so this is a bit hacky
+                //
+                // see: https://github.com/ethereum/web3.js/issues/2603
+                if (typeof value === 'object' && !Array.isArray(value)) {
+                  if (!value._hex) {
+                    logger.warn(`[${this.name}]`, 'object without _hex property found in returnValue for event (was ethers.js updated??):', `[${contract.name}]`, event)
+                  }
+                  filteredReturnValues[key] = value.toString()
+                }
+
               })
 
               return {

@@ -143,9 +143,7 @@ Now any events emitted by the contracts you've deployed will be index in the Mon
 
 ## Maintainers
 
-- [John Forrest](mailto:john@codexprotocol.com) ([@johnhforrest](https://github.com/johnhforrest))
 - [Colin Wood](mailto:colin@codexprotocol.com) ([@Anaphase](https://github.com/Anaphase))
-- [Shawn Price](mailto:shawn@codexprotocol.com) ([@sprice](https://github.com/sprice))
 
 
 ## Contribute

@@ -1,5 +1,3 @@
-import 'babel-polyfill'
-
 import Bluebird from 'bluebird'
 
 import logger from './services/logger'
