@@ -1,6 +1,7 @@
 apps:
   -
     script: /opt/process/dist/index.js
+    kill_timeout: 600000 # wait up to 10 minutes for a graceful shutdown
     exec_mode: cluster
     instances: max
     name: eel
