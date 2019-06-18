@@ -5,16 +5,33 @@ const schema = new mongoose.Schema({
     index: true,
     type: String,
   },
-  blockNumber: Number,
-  contractName: String,
-  contractAddress: String,
-  transactionHash: String,
-  returnValues: mongoose.Schema.Types.Mixed,
+  manuallyReprocess: {
+    type: Boolean,
+    default: false,
+  },
+  blockNumber: {
+    type: Number,
+    required: true,
+  },
+  contractName: {
+    type: String,
+    required: true,
+  },
+  contractAddress: {
+    type: String,
+    required: true,
+  },
+  transactionHash: {
+    type: String,
+    required: true,
+  },
+  returnValues: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true,
+  },
   createdAt: {
     type: Date,
-    default: () => {
-      return Date.now()
-    },
+    default: Date.now,
   },
 })
 
