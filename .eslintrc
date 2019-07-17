@@ -1,5 +1,0 @@
-{
-  "extends": [
-    "@codex-protocol/eslint-config-base"
-  ]
-}
