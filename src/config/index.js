@@ -33,4 +33,4 @@ const networkName = (() => {
 // eslint-disable-next-line import/no-dynamic-require, global-require
 const networkConfig = require(`${__dirname}/${networkName}`).default
 
-export default { networkName, ...networkConfig, ...commonConfig }
+export default Object.assign({ networkName }, networkConfig, commonConfig)
