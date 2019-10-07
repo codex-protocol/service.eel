@@ -36,6 +36,6 @@ const schema = new mongoose.Schema({
 })
 
 schema.index({ blockNumber: 1, contractName: 1 })
-schema.index({ blockNumber: 1, contractName: 1, manuallyReprocess: 1 })
+schema.index({ manuallyReprocess: 1, contractName: 1, blockNumber: 1 })
 
 export default mongoose.model('BlockchainEvent', schema)
