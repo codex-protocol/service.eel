@@ -9,24 +9,22 @@ const insertManyOptions = {
   ordered: false, // insert all documents possible and report errors later
 }
 
+// this is just so we don't have to call Object.values(contracts) in each job
+//  loop
+//
+// since the contracts in @codex-protocol/ethereum-service are populated at run
+//  time and never changed, we can be confident that caching the object values
+//  is ok
+const cachedContracts = Object.values(contracts)
+  // also filter out any contracts that haven't been deployed
+  .filter((contract) => {
+    return !!contract.address
+  })
+
 export default {
 
   name: 'process-blocks',
   frequency: `${config.blockchain.averageBlockTime} seconds`,
-
-  setup() {
-    // this is just so we don't have to call Object.values(contracts) in each
-    //  job loop
-    //
-    // since the contracts in @codex-protocol/ethereum-service are populated at
-    //  run time and never changed, we can be confident that caching the object
-    //  values is ok
-    this.contracts = Object.values(contracts)
-      // also filter out any contracts that haven't been deployed
-      .filter((contract) => {
-        return !!contract.address
-      })
-  },
 
   getJob() {
     return models.Job.findOne({ name: this.name })
@@ -118,12 +116,16 @@ export default {
               .then(() => {
                 job.data.nextBlockNumberToProcess = toBlock + 1
                 job.markModified('data')
-                return job.save()
               })
 
           })
+
           .catch((error) => {
             logger.warn(`[${this.name}]`, 'could not process blocks:', error)
+          })
+
+          .finally(() => {
+            return job.save()
           })
 
       })
@@ -139,7 +141,7 @@ export default {
     }
 
     // for all contracts...
-    return Bluebird.mapSeries(this.contracts, (contract) => {
+    return Bluebird.mapSeries(cachedContracts, (contract) => {
 
       // ...get all events emitted in this chunk
       return contract

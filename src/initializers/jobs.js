@@ -5,9 +5,18 @@ import filewalker from 'filewalker'
 import config from '../config'
 import logger from '../services/logger'
 
+const jobs = []
+
 export default () => {
 
-  const agenda = new Agenda({ db: { address: config.mongodbUri } })
+  const agenda = new Agenda({
+    db: {
+      address: config.mongodbUri,
+      options: {
+        useNewUrlParser: true,
+      },
+    },
+  })
 
   const gracefulShutdown = () => {
     agenda.stop(() => {
@@ -27,11 +36,10 @@ export default () => {
 
         agenda.on('ready', () => {
 
-          const jobs = []
           const filewalkerHandler = filewalker(`${__dirname}/../jobs`, { recursive: true })
 
           filewalkerHandler.on('error', reject)
-          filewalkerHandler.on('done', () => { resolve(jobs) })
+          filewalkerHandler.on('done', () => { resolve() })
 
           // dynamically load & register all the jobs
           filewalkerHandler.on('file', (jobFilePath) => {
@@ -42,7 +50,7 @@ export default () => {
               return
             }
 
-            /* eslint import/no-dynamic-require: 0 global-require: 0 */
+            // eslint-disable-next-line import/no-dynamic-require, global-require
             const job = require(`${__dirname}/../jobs/${jobFilePath}`).default
 
             if (!job || typeof job.execute !== 'function') {
@@ -61,38 +69,31 @@ export default () => {
     })
 
     // then register all the jobs with agenda...
-    .then((jobs) => {
-
-      const cancelAgendaJob = Bluebird.promisify(agenda.cancel, { context: agenda })
+    .then(() => {
 
       return Bluebird.map(jobs, (job) => {
 
-        // cancel any old jobs of the same name first
-        return cancelAgendaJob({ name: job.name })
-          .then((numJobsCanceled) => {
+        agenda.define(job.name, (agendaJob, done) => {
+          job.execute()
+            .then(() => {
+              done()
+            })
+            .catch((error) => {
+              logger.error(`[${job.name}]`, 'could not execute job:', error)
+              done(error)
+            })
+        })
 
-            logger.verbose(`canceled ${numJobsCanceled} existing ${job.name} job(s)`)
+        // if no frequency is defined, the job will only be run manually
+        //  and never periodically
+        if (!job.frequency) {
+          return null
+        }
 
-            // run the job's setup() method if it exists
-            return Bluebird.resolve(job.setup ? job.setup() : null)
-              .then(() => {
+        return agenda.every(job.frequency, job.name, null, job.options)
 
-                agenda.define(job.name, (agendaJob, done) => {
-                  job.execute()
-                    .then(done)
-                    .catch((error) => {
-                      logger.error(`[${job.name}]`, 'could not execute job:', error)
-                      done(error)
-                    })
-
-                })
-
-                agenda.every(job.frequency || `${config.blockchain.averageBlockTime} seconds`, job.name)
-
-              })
-
-          })
       })
+
     })
 
     // finally, start agenda
