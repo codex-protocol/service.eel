@@ -33,6 +33,10 @@ const schema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  error: {
+    type: String,
+    default: null,
+  },
 })
 
 schema.index({ blockNumber: 1, contractName: 1 })
