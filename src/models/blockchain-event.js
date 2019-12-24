@@ -31,6 +31,7 @@ const schema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
+    index: true,
     default: Date.now,
   },
   error: {
