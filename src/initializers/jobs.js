@@ -19,9 +19,10 @@ export default () => {
   })
 
   const gracefulShutdown = () => {
-    agenda.stop(() => {
-      process.exit(0)
-    })
+    agenda.stop()
+      .then(() => {
+        process.exit(0)
+      })
   }
 
   process.on('SIGINT', gracefulShutdown)
