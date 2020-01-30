@@ -5,6 +5,10 @@ const schema = new mongoose.Schema({
     index: true,
     type: String,
   },
+  manuallyReprocess: {
+    type: Boolean,
+    default: false,
+  },
   blockNumber: {
     type: Number,
     required: true,
@@ -44,6 +48,7 @@ const schema = new mongoose.Schema({
 
 schema.index({ blockNumber: 1, contractName: 1 })
 schema.index({ transactionHash: 1, contractName: 1 })
+schema.index({ manuallyReprocess: 1, contractName: 1, blockNumber: 1 })
 schema.index({ processedByCodexRegistryApiAt: 1, contractName: 1, blockNumber: 1 })
 
 export default mongoose.model('BlockchainEvent', schema)
