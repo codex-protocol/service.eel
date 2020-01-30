@@ -30,13 +30,18 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     required: true,
   },
+  error: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     index: true,
     default: Date.now,
   },
-  error: {
-    type: String,
+  processedByCodexRegistryApiAt: {
+    type: Date,
+    index: true,
     default: null,
   },
 })
