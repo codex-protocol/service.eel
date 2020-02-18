@@ -2,7 +2,7 @@ import { web3 } from '@codex-protocol/ethereum-service'
 
 export default {
   process: {
-    logLevel: 'verbose',
+    logLevel: 'info',
   },
   blockchain: {
     startingBlockHeight: 4132900,

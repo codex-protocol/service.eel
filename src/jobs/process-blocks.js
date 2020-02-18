@@ -44,12 +44,13 @@ export default {
 
             const numBlocks = (currentBlockNumberWithMinConfirmations - config.blockchain.startingBlockHeight)
             const timeEstimate = Math.round((numBlocks / config.blockchain.chunkSize) * config.blockchain.averageBlockTime)
-            logger.info(`[${this.name}]`, 'rebuilding database from block', config.blockchain.startingBlockHeight, 'to block', currentBlockNumberWithMinConfirmations, `(${numBlocks} blocks)`)
-            logger.info(`[${this.name}]`, 'this will take about', Math.floor(timeEstimate / 60), 'minutes,', timeEstimate % 60, 'seconds')
+            logger.info(`[${this.name}] rebuilding database from block ${config.blockchain.startingBlockHeight} to block ${currentBlockNumberWithMinConfirmations} (${numBlocks} total blocks)`)
+            logger.info(`[${this.name}] this will take about ${Math.floor(timeEstimate / 60)} minutes, ${timeEstimate % 60} seconds`)
 
             return models.Job.create({
               name: this.name,
               data: {
+                blockNumberToManuallyReprocess: null,
                 nextBlockNumberToProcess: config.blockchain.startingBlockHeight,
               },
             })
@@ -88,7 +89,7 @@ export default {
               .remove({ blockNumber: { $gte: job.data.nextBlockNumberToProcess } })
               .then(({ result }) => {
                 if (result.n > 0) {
-                  logger.info(`[${this.name}]`, `removed ${result.n} existing BlockchainEvent records with blockNumber >= ${job.data.nextBlockNumberToProcess}`)
+                  logger.info(`[${this.name}] removed ${result.n} existing BlockchainEvent records with blockNumber >= ${job.data.nextBlockNumberToProcess}`)
                 }
                 return currentBlockNumberWithMinConfirmations
               })
@@ -100,7 +101,7 @@ export default {
             logger.verbose(`[${this.name}]`, `current block number with ${config.blockchain.minConfirmations} confirmations is`, currentBlockNumberWithMinConfirmations)
 
             if (job.data.nextBlockNumberToProcess > currentBlockNumberWithMinConfirmations) {
-              logger.verbose(`[${this.name}]`, `no blocks to process, waiting until ${job.data.nextBlockNumberToProcess} has at least ${config.blockchain.minConfirmations} confirmations`)
+              logger.verbose(`[${this.name}] no blocks to process, waiting until ${job.data.nextBlockNumberToProcess} has at least ${config.blockchain.minConfirmations} confirmations`)
               return job
             }
 
@@ -121,7 +122,26 @@ export default {
           })
 
           .catch((error) => {
-            logger.warn(`[${this.name}]`, 'could not process blocks:', error)
+            logger.warn(`[${this.name}] could not process blocks:`, error)
+          })
+
+          .then(() => {
+
+            if (!job.data.blockNumberToManuallyReprocess) {
+              return job
+            }
+
+            logger.info(`[${this.name}] manually reprocessing block number ${job.data.blockNumberToManuallyReprocess}`)
+
+            return this.processBlocks(job.data.blockNumberToManuallyReprocess, job.data.blockNumberToManuallyReprocess, true)
+              .catch((error) => {
+                logger.warn(`[${this.name}] could not manually reprocess block number ${job.data.blockNumberToManuallyReprocess}:`, error)
+              })
+              .finally(() => {
+                job.data.blockNumberToManuallyReprocess = null
+                job.markModified('data')
+              })
+
           })
 
           .finally(() => {
@@ -132,12 +152,12 @@ export default {
 
   },
 
-  processBlocks(fromBlock, toBlock) {
+  processBlocks(fromBlock, toBlock = fromBlock, manuallyReprocess = false) {
 
     if (fromBlock === toBlock) {
-      logger.verbose(`[${this.name}]`, 'processing block number', fromBlock)
+      logger.verbose(`[${this.name}] processing block number ${fromBlock}`)
     } else {
-      logger.verbose(`[${this.name}]`, 'processing block numbers', fromBlock, '-', toBlock)
+      logger.verbose(`[${this.name}] processing block numbers ${fromBlock} - ${toBlock}`)
     }
 
     // for all contracts...
@@ -159,8 +179,8 @@ export default {
                 return null
               }
 
-              logger.verbose(`[${this.name}]`, `found event on block number ${event.blockNumber}:`, `[${contract.name}]`, event.event)
-              logger.debug(`[${this.name}]`, 'event data:', `[${contract.name}]`, event)
+              logger.verbose(`[${this.name}] found event on block number ${event.blockNumber}: [${contract.name}] ${event.event}`)
+              logger.debug(`[${this.name}] event data: [${contract.name}]`, event)
 
               // remove all the "numbered" keys in event.returnValues since we
               //  really just want their named counterparts
@@ -185,7 +205,7 @@ export default {
                 // see: https://github.com/ethereum/web3.js/issues/2603
                 if (typeof value === 'object' && !Array.isArray(value)) {
                   if (!value._hex) {
-                    logger.warn(`[${this.name}]`, 'object without _hex property found in returnValue for event (was ethers.js updated??):', `[${contract.name}]`, event)
+                    logger.warn(`[${this.name}] object without _hex property found in returnValue for event (was ethers.js updated??): [${contract.name}]`, event)
                   }
                   filteredReturnValues[key] = value.toString()
                 }
@@ -193,6 +213,7 @@ export default {
               })
 
               return {
+                manuallyReprocess,
                 eventName: event.event,
                 contractName: contract.name,
                 blockNumber: event.blockNumber,
