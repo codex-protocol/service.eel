@@ -86,10 +86,10 @@ export default {
             }
 
             return models.BlockchainEvent
-              .remove({ blockNumber: { $gte: job.data.nextBlockNumberToProcess } })
-              .then(({ result }) => {
+              .deleteMany({ blockNumber: { $gte: job.data.nextBlockNumberToProcess } })
+              .then((result) => {
                 if (result.n > 0) {
-                  logger.info(`[${this.name}] removed ${result.n} existing BlockchainEvent records with blockNumber >= ${job.data.nextBlockNumberToProcess}`)
+                  logger.warn(`[${this.name}] removed ${result.n} existing BlockchainEvent records with blockNumber >= ${job.data.nextBlockNumberToProcess}`)
                 }
                 return currentBlockNumberWithMinConfirmations
               })
