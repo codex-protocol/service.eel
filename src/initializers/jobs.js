@@ -14,6 +14,7 @@ export default () => {
       address: config.mongodbUri,
       options: {
         useNewUrlParser: true,
+        useUnifiedTopology: true,
       },
     },
   })
