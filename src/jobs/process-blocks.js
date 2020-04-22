@@ -231,25 +231,25 @@ export default {
 
         })
 
-        // flatten & sort the array of arrays returned above, e.g.
-        //  [[Contract1Events], [Contract2Events]] =>
-        //  [Contract1Event1, Contract1Event2, Contract2Event1, Contract2Event2]
-        .then((newBlockchainEventsData) => {
-          return newBlockchainEventsData
-            .reduce((accumulator, currentValue) => {
-              return accumulator.concat(currentValue)
-            }, [])
-            .sort((a, b) => {
-              return a.blockNumber - b.blockNumber
-            })
-        })
-
-        // insert all the records
-        .then((newBlockchainEventsData) => {
-          return models.BlockchainEvent.insertMany(newBlockchainEventsData, insertManyOptions)
-        })
-
     })
+
+      // flatten & sort the array of arrays returned above, e.g.
+      //  [[Contract1Events], [Contract2Events]] =>
+      //  [Contract1Event1, Contract1Event2, Contract2Event1, Contract2Event2]
+      .then((newBlockchainEventsData) => {
+        return newBlockchainEventsData
+          .reduce((accumulator, currentValue) => {
+            return accumulator.concat(currentValue)
+          }, [])
+          .sort((a, b) => {
+            return a.blockNumber - b.blockNumber
+          })
+      })
+
+      // insert all the records
+      .then((newBlockchainEventsData) => {
+        return models.BlockchainEvent.insertMany(newBlockchainEventsData, insertManyOptions)
+      })
 
   },
 
