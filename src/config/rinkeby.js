@@ -7,7 +7,7 @@ export default {
   blockchain: {
     startingBlockHeight: 3069600,
     minConfirmations: web3.transactionConfirmationBlocks,
-    averageBlockTime: 15, // in seconds, this dictates how frequently to run agenda jobs
+    averageBlockTime: 60, // in seconds, this dictates how frequently to run agenda jobs
     chunkSize: 50000, // max number of blocks to request each time the process-blocks job is run
   },
 }
