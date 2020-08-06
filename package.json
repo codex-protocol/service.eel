@@ -18,11 +18,11 @@
   "scripts": {
     "clean": "rm -rf dist",
     "lint": "eslint src/.",
+    "build": "npm run lint && npm run compile",
     "drop-db": "mongo eel --eval 'db.dropDatabase()'",
     "start": "npm run lint && babel-node src/index.js",
     "compile": "npm run clean && babel src --out-dir dist",
     "link-all": "npm link @codex-protocol/ethereum-service",
-    "build": "npm run lint && npm audit && npm run compile",
     "start:compiled": "npm run compile && node dist/index.js",
     "install-and-link": "rm -rf node_modules && npm install && npm run link-all"
   },
