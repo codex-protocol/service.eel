@@ -15,9 +15,6 @@ const commonConfig = {
 
   // report errors to sentry if a DSN is specified
   useSentry: !!process.env.SENTRY_DSN,
-
-  // log events to mixpanel if a token is specified
-  useMixpanel: !!process.env.MIXPANEL_TOKEN,
 }
 
 const networkName = (() => {
