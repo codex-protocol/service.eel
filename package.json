@@ -29,7 +29,7 @@
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "@babel/runtime-corejs2": "^7.0.0",
-    "@codex-protocol/ethereum-service": "^2.2.1",
+    "@codex-protocol/ethereum-service": "^2.2.2",
     "agenda": "^3.1.0",
     "bluebird": "^3.5.1",
     "dotenv": "^4.0.0",
